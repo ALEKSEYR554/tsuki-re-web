@@ -8,3 +8,5 @@
 # Keep them on disk, never commit them.
 /media-base.json
 *.webp
+# Local test/CDP junk (screenshots, CDP scripts) is never committed:
+/test/

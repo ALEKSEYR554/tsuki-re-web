@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0034";
+  const BUILD = "knife-port-0035";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -443,7 +443,7 @@
           } };
       }),
       onMovie: async (id) => {
-        const base = lookupPackMap(game.script, "movies", id) || ("assets/movie/" + id + ".mp4");
+        const base = lookupPackMap(game.script, "movies", id) || mediaUrl("assets/movie/" + id + ".mp4");
         const url = movieUrlForLang(base);
         return new Promise((res) => {
           // knife: a story movie takes only B / Plus, which skip it
@@ -576,8 +576,9 @@
       onSeFired: (e) => {
         if (e.kind === "SEPL") {
           if (!e.url) { audio.stopSe(e.channel, 0); delete seLoops[e.channel]; return; }
-          audio.playSe(e.url, { channel: e.channel, volume: e.vol, fadeIn: e.fadeIn, looping: e.looping, pan: e.pan, speakerRow: e.speakerRow });
-          if (e.looping) seLoops[e.channel] = { url: e.url, vol: e.vol, pan: e.pan, channel: e.channel };
+          const url = mediaUrl(e.url);
+          audio.playSe(url, { channel: e.channel, volume: e.vol, fadeIn: e.fadeIn, looping: e.looping, pan: e.pan, speakerRow: e.speakerRow });
+          if (e.looping) seLoops[e.channel] = { url, vol: e.vol, pan: e.pan, channel: e.channel };
           else delete seLoops[e.channel];
         } else if (e.kind === "SEFD") {
           audio.stopSe(e.channel, e.fade);
@@ -826,8 +827,8 @@
     const name = SYS_SE[n];
     if (!name) return;
     try {
-      if (n === 7) audio.playSe("assets/se/" + name + ".ogg", { channel: 20, volume: 1 });
-      else audio.playSe("assets/se/" + name + ".ogg", { channel: 20, sys: true });
+      if (n === 7) audio.playSe(mediaUrl("assets/se/" + name + ".ogg"), { channel: 20, volume: 1 });
+      else audio.playSe(mediaUrl("assets/se/" + name + ".ogg"), { channel: 20, sys: true });
     } catch (e) {}
   }
   // language-suffixed movie file (op1_arc_en.mp4 etc.): the base name
@@ -1850,7 +1851,7 @@
         // the title, where game is null and there is no scene at all.
         const TEST_SES = ["MOON_SE02009", "MOON_SE02010", "MOON_SE02011", "MOON_SE02023", "MOON_SE02035", "MOON_SE02037", "MOON_SE02052", "MOON_SE02058", "MOON_SE02062", "MOON_SE02091", "MOON_SE10047", "MOON_SE02097", "MOON_SE02103", "MOON_SE09005"];
         const name = TEST_SES[Math.floor(Math.random() * TEST_SES.length)];
-        audio.playSe("assets/se/" + name + ".ogg", { channel: 20 });
+        audio.playSe(mediaUrl("assets/se/" + name + ".ogg"), { channel: 20 });
       },
       onLang: (lang) => applyLanguage(lang),
     });
