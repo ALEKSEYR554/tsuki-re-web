@@ -1,0 +1,10 @@
+# Unpacked media is never part of the code repo: on the server it lives
+# on the media domain, locally it is a junction/symlink to dist/.
+/assets/
+/scenes/
+*.mp4
+# UI textures are media too (since 0034): they load through mediaBase
+# when it is set, and fall back to relative paths for local dev.
+# Keep them on disk, never commit them.
+/media-base.json
+*.webp

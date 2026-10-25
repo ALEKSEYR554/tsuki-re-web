@@ -1,0 +1,20 @@
+[
+ {
+  "id": 4,
+  "file": "assets/movie/prologue.mp4",
+  "label": "Prologue",
+  "flag": null
+ },
+ {
+  "id": 5,
+  "file": "assets/movie/op1_arc.mp4",
+  "label": "Opening (Arcueid)",
+  "flag": 0
+ },
+ {
+  "id": 6,
+  "file": "assets/movie/op2_ciel.mp4",
+  "label": "Opening (Ciel)",
+  "flag": 1
+ }
+]

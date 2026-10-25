@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Tsukihime — knife-port</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="canvas" width="1920" height="1080"></canvas>
+    <video id="movie" playsinline></video>
+    <div id="veil"></div>
+    <div id="winpanel"><img id="winpanel-img" src="data/disp_txtwindow01_en.webp" alt=""></div>
+    <div id="textbox"><div id="text"></div></div>
+    <div id="choices"></div>
+    <div id="dock">
+      <div class="dock-group">
+        <button id="dock-back" title="Back one line">⏮</button>
+        <button id="dock-auto" title="Auto">▶</button>
+        <button id="dock-ff" title="Hold to fast-forward">⏭</button>
+        <button id="dock-skip" title="Skip read text">⏭⏭</button>
+        <button id="dock-qsave">Q.SAVE</button>
+        <button id="dock-qload">Q.LOAD</button>
+      </div>
+      <span id="dock-msg"></span>
+      <button id="dock-mute" title="Mute">🔊</button>
+    </div>
+    <div id="dock-hint">Hold to fast-forward. Let go to stop.</div>
+    <div id="title">
+      <video id="title-video" muted playsinline></video>
+      <img id="title-bg-fallback" src="data/title/bg1.webp" alt="">
+      <img id="title-lumi" src="data/title/lumi.webp" alt="">
+      <canvas id="title-fx" width="1920" height="1080"></canvas>
+      <div id="title-inner">
+        <div id="title-logo-slice1"></div>
+        <div id="title-logo-slice2"></div>
+        <button id="btn-continue" class="title-btn" data-cell="4" style="display:none">CONTINUE</button>
+        <button id="btn-newgame" class="title-btn" data-cell="0">NEW GAME</button>
+        <button id="btn-load" class="title-btn" data-cell="1">LOAD GAME</button>
+        <button id="btn-config" class="title-btn" data-cell="2">CONFIG</button>
+        <button id="btn-gallery" class="title-btn" data-cell="3">GALLERY</button>
+        <div id="title-press">PRESS ANY BUTTON</div>
+      </div>
+      <img id="title-note-img" src="data/title/copy.webp" alt="">
+    </div>
+    <div id="intro" style="display:none">
+      <div id="intro-bg"></div>
+      <img id="intro-img" alt="">
+      <div id="intro-white"></div>
+    </div>
+    <div id="boot-video-wrap" style="display:none">
+      <video id="boot-video" playsinline></video>
+      <div id="boot-video-hint" style="display:none">Click for sound</div>
+    </div>
+    <div id="system" style="display:none">
+      <div id="sys-panel">
+        <div id="sys-topbar"><span id="sys-topbar-title"></span><span id="sys-topbar-note"></span></div>
+        <div id="sys-row2">
+          <div id="sys-nav"></div>
+          <div id="sys-main">
+            <div id="sys-head"><span id="sys-title"></span><button id="sys-close">✕</button></div>
+            <div id="sys-body"></div>
+          </div>
+        </div>
+        <div id="sys-foot"></div>
+      </div>
+    </div>
+  </div>
+  <div id="hud">
+    <span id="hud-build"></span>
+    <span id="hud-scene"></span>
+    <span class="hud-spacer"></span>
+    <span id="hud-auto"></span>
+    <button id="hud-menu">MENU</button>
+  </div>
+</div>
+<script src="js/kp.js"></script>
+<script src="js/kw/penner.js"></script>
+<script src="js/kw/motion.js"></script>
+<script src="js/kw/tween.js"></script>
+<script src="js/kw/stage.js"></script>
+<script src="js/kw/ghost.js"></script>
+<script src="js/kw/focus.js"></script>
+<script src="js/kw/band.js"></script>
+<script src="js/kw/motion_apply.js"></script>
+<script src="js/kw/flowjump.js"></script>
+<script src="js/pad.js"></script>
+<script src="js/shake.js"></script>
+<script src="js/snap.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/vm.js"></script>
+<script src="js/text.js"></script>
+<script src="js/system.js"></script>
+<script src="js/sysui.js"></script>
+<script src="js/render.js"></script>
+<script src="js/wgpu.js"></script>
+<script src="js/boot.js"></script>
+</body>
+</html>
