@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0038";
+  const BUILD = "knife-port-0040";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -188,14 +188,26 @@
       return d;
     } catch (e) { return undefined; }
   }
+  // images_i18n values are per-language dicts {en, zc, zt} (0039 fixed
+  // a latent bug: the dict itself was passed to mediaUrl/loadImage, so
+  // all 155 i18n textures silently failed on every non-JA language).
+  // Resolve to the current language, EN fallback; JA never resolves
+  // (its texture is the base one in pack.images / the default path).
+  function i18nImage(pack, low) {
+    if (!pack || !pack.images_i18n) return null;
+    const v = pack.images_i18n[low];
+    if (!v) return null;
+    if (typeof v === "string") return v;
+    if (LANG === "ja") return null;
+    return v[LANG] || v.en || null;
+  }
   function imageUrlFor(name, pack) {
     if (!name) return null;
     const low = name.toLowerCase();
     if (pack && pack.images) {
       // EN packs: the i18n texture wins when one exists (text-heavy images)
-      if (LANG !== "ja" && pack.images_i18n && pack.images_i18n[low]) return mediaUrl(pack.images_i18n[low]);
+      if (LANG !== "ja") { const u = i18nImage(pack, low); if (u) return mediaUrl(u); }
       if (pack.images[low]) return mediaUrl(pack.images[low]);
-      if (pack.images_i18n && pack.images_i18n[low]) return mediaUrl(pack.images_i18n[low]);
     }
     return mediaUrl("assets/img/" + low + ".webp");
   }
@@ -890,10 +902,11 @@
     } catch (e) {}
   }
   // language-suffixed movie file (op1_arc_en.mp4 etc.): the base name
-  // is the Japanese file; ja (or an unknown language) uses the base
+  // is the Japanese file; ja (or an unknown language) uses the base.
+  // RU has no localized movies: it falls back to the EN ones (0039).
   function movieUrlForLang(url) {
     const lang = (config && config.lang) || "en";
-    const suf = lang === "en" ? "_en" : lang === "zc" ? "_zc" : lang === "zt" ? "_zt" : "";
+    const suf = lang === "en" || lang === "ru" || lang === "custom" ? "_en" : lang === "zc" ? "_zc" : lang === "zt" ? "_zt" : "";
     if (!suf || !url.endsWith(".mp4")) return mediaUrl(url);
     return mediaUrl(url.slice(0, -4) + suf + ".mp4");
   }
@@ -1213,6 +1226,125 @@
     }
     return false;
   }
+  // RU script (0039): a code-side file, not part of scene packs, so
+  // scenes/media never need re-uploading. Loaded lazily on first use.
+  let ruTexts = null, ruTextsPromise = null;
+  async function ensureRuTexts() {
+    if (ruTexts) return ruTexts;
+    if (!ruTextsPromise) ruTextsPromise = fetchJSON("data/texts_ru.json").then((d) => { ruTexts = d; return d; }).catch(() => { ruTextsPromise = null; return null; });
+    return ruTextsPromise;
+  }
+  // Custom translations (0040): the same single-file shape as
+  // texts_ru.json ({scene: {$id: line}}), loaded by the user from Config
+  // and kept in its own IndexedDB (kp-i18n) so it survives sessions
+  // without touching saves (kp-saves) or the code bundle.
+  const I18N_DB = "kp-i18n", I18N_STORE = "kv";
+  let i18nDbPromise = null, customTexts = null, customName = null;
+  function openI18nDb() {
+    if (i18nDbPromise) return i18nDbPromise;
+    i18nDbPromise = new Promise((res, rej) => {
+      try {
+        const req = indexedDB.open(I18N_DB, 1);
+        req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(I18N_STORE)) req.result.createObjectStore(I18N_STORE); };
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+      } catch (e) { rej(e); }
+    });
+    return i18nDbPromise;
+  }
+  function i18nRun(mode, key, value) {
+    return openI18nDb().then((db) => new Promise((res, rej) => {
+      let out;
+      const tx = db.transaction(I18N_STORE, mode);
+      tx.oncomplete = () => res(out);
+      tx.onerror = () => rej(tx.error);
+      try {
+        const r = mode === "readonly" ? tx.objectStore(I18N_STORE).get(key) : (value === undefined ? tx.objectStore(I18N_STORE).delete(key) : tx.objectStore(I18N_STORE).put(value, key));
+        if (r && r.onsuccess !== undefined) r.onsuccess = () => { out = r.result; }; else out = r;
+      } catch (e) { rej(e); }
+    }));
+  }
+  function validateCustomTexts(d) {
+    if (!d || typeof d !== "object" || Array.isArray(d)) return "Not a JSON object.";
+    let scenes = 0, lines = 0;
+    for (const [sc, dict] of Object.entries(d)) {
+      if (!dict || typeof dict !== "object" || Array.isArray(dict)) return `Scene "${sc}" is not an object.`;
+      for (const [id, line] of Object.entries(dict)) {
+        if (!id.startsWith("$")) return `Key "${id}" in scene "${sc}" is not a $id.`;
+        if (typeof line !== "string") return `Line ${sc} ${id} is not a string.`;
+        lines++;
+      }
+      scenes++;
+    }
+    if (!scenes) return "Empty file.";
+    return null;
+  }
+  async function importCustomTexts(file) {
+    const d = JSON.parse(await file.text());
+    const err = validateCustomTexts(d);
+    if (err) throw new Error(err);
+    const known = new Set(Object.keys(manifest.scenes));
+    const matched = Object.keys(d).filter((s) => known.has(s)).length;
+    if (!matched) throw new Error("No scene in this file matches the game.");
+    // house format: every line ends \r\n (same as texts_ru.json)
+    for (const dict of Object.values(d)) for (const k of Object.keys(dict)) dict[k] = dict[k].replace(/\r?\n$/, "") + "\r\n";
+    let scenes = 0, lines = 0;
+    for (const dict of Object.values(d)) { scenes++; lines += Object.keys(dict).length; }
+    await i18nRun("readwrite", "custom", { name: file.name || "custom", data: d });
+    customTexts = d; customName = file.name || "custom";
+    return { scenes, lines };
+  }
+  async function removeCustomTexts() {
+    await i18nRun("readwrite", "custom", undefined);
+    customTexts = null; customName = null;
+  }
+  // ru/custom injection shared by startScene and applyLanguage: the
+  // built-in packs carry only en/zc/zt, so ru/custom plug in here.
+  async function injectLangTexts(pack, name) {
+    if (LANG !== "ru" && LANG !== "custom") return;
+    const rt = LANG === "ru" ? await ensureRuTexts() : customTexts;
+    if (rt && rt[name]) { pack.texts_i18n = pack.texts_i18n || {}; pack.texts_i18n[LANG] = rt[name]; }
+  }
+  function downloadJSON(filename, obj) {
+    const blob = new Blob([JSON.stringify(obj, null, 1)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.download = filename;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }
+  // Export the selected language as one file in the texts_ru.json shape:
+  // ru/custom come from their single file / memory, ja/en/zc/zt are
+  // assembled from the scene packs (8 concurrent fetches).
+  async function exportLangTexts(lang) {
+    let data;
+    if (lang === "ru") data = await fetchJSON("data/texts_ru.json");
+    else if (lang === "custom") {
+      if (!customTexts) throw new Error("No custom translation loaded.");
+      data = customTexts;
+    } else {
+      data = {};
+      const names = manifest.scene_order || Object.keys(manifest.scenes);
+      let idx = 0;
+      const workers = Array.from({ length: 8 }, async () => {
+        while (idx < names.length) {
+          const name = names[idx++];
+          const meta = manifest.scenes[name];
+          if (!meta) continue;
+          try {
+            const pack = await fetchJSON(mediaUrl(meta.file));
+            const dict = lang === "ja" ? pack.texts : (pack.texts_i18n && pack.texts_i18n[lang]);
+            if (dict && Object.keys(dict).length) data[name] = dict;
+          } catch (e) { /* unreadable scene: skipped */ }
+        }
+      });
+      await Promise.all(workers);
+    }
+    let scenes = 0, lines = 0;
+    for (const dict of Object.values(data)) { scenes++; lines += Object.keys(dict).length; }
+    downloadJSON("texts_" + lang + ".json", data);
+    return { scenes, lines };
+  }
   async function startScene(name, label, resumePc, fresh, opts) {
     const meta = manifest.scenes[name];
     if (!meta) return;
@@ -1227,6 +1359,7 @@
     let pack, motionsData;
     try {
       pack = await fetchJSON(mediaUrl(meta.file));
+      await injectLangTexts(pack, name);
       motionsData = await loadMotions(name);
       await warmTextures(pack, motionsData, true);
     } finally { doneGate(); }
@@ -1706,12 +1839,14 @@
     stageEl.style.marginRight = (1920 * (s - 1)) + "px";
   }
   addEventListener("resize", fitStage);
-  function applyLanguage(lang) {
+  async function applyLanguage(lang) {
     LANG = lang;
     config.lang = lang;
     KP.System.saveConfig(config);
     textures = {}; texDirty = true; lastSig = null;
+    textWin.setLayout(lang);
     if (!game) return;
+    await injectLangTexts(game.script, game.sceneName);
     // re-render the current page in the new language (fully shown);
     // the re-show must not re-append to the backlog page buffer
     const lines = pageLineIds.slice();
@@ -1735,7 +1870,7 @@
     await initRenderer();
     // boot JSON in parallel (was six sequential awaits): the page start
     // is 3.7 MB of JSON, and the round-trips were pure dead time.
-    const [man, imgTab, grd, hazeData, flowData, galData, voiceData, sysmesData, flowExtraData, flowThumbsData, bgmLoopData, musicData, endingsData, moviesData, flowMarksData, mediaBaseData] = await Promise.all([
+    const [man, imgTab, grd, hazeData, flowData, galData, voiceData, sysmesData, flowExtraData, flowThumbsData, bgmLoopData, musicData, endingsData, moviesData, flowMarksData, mediaBaseData, customData] = await Promise.all([
       fetchJSON("manifest.json"),
       fetchJSON("data/images_en.json"),
       fetchJSON("data/grades.json").catch(() => null),
@@ -1752,6 +1887,7 @@
       fetchJSON("data/movies.json").catch(() => null),
       fetchJSON("data/flow_marks.json").catch(() => null),
       fetchJSON("media-base.json").catch(() => null),
+      i18nRun("readonly", "custom").catch(() => null),
     ]);
     if (mediaBaseData && mediaBaseData.base) {
       mediaBase = String(mediaBaseData.base);
@@ -1783,6 +1919,10 @@
     }
     flowMarks = flowMarksData;
     manifest = man;
+    // custom translation from a previous session (0040); a saved
+    // "custom" language with no data behind it falls back to EN
+    if (customData && customData.data) { customTexts = customData.data; customName = customData.name || "custom"; }
+    if (LANG === "custom" && !customTexts) { LANG = "en"; config.lang = "en"; KP.System.saveConfig(config); applyConfigToEngine(); }
     imagesTable = lowerMap(imgTab);
     grades = grd;
     hazeTable = hazeData;
@@ -1899,7 +2039,7 @@
       cgImageUrl: (name) => {
         const low = String(name).toLowerCase();
         const pack = game ? game.script : null;
-        if (pack && LANG !== "ja" && pack.images_i18n && pack.images_i18n[low]) return mediaUrl(pack.images_i18n[low]);
+        if (LANG !== "ja") { const u = i18nImage(pack, low); if (u) return mediaUrl(u); }
         if (pack && pack.images && pack.images[low]) return mediaUrl(pack.images[low]);
         return mediaUrl("assets/img/" + low + ".webp");
       },
@@ -1922,6 +2062,10 @@
         audio.playSe(mediaUrl("assets/se/" + name + ".ogg"), { channel: 20 });
       },
       onLang: (lang) => applyLanguage(lang),
+      getCustomInfo: () => (customName ? { name: customName } : null),
+      importCustom: (file) => importCustomTexts(file),
+      removeCustom: async () => { await removeCustomTexts(); if (config.lang === "custom") await applyLanguage("en"); },
+      exportLang: (lang) => exportLangTexts(lang),
     });
     // deep link to a scene beat, in any of the forms that reach this page:
     // #/00_00/2682, #00_00/2682, ?00_00/2682, ?scene=00_00&pc=2682, or a

@@ -64,6 +64,13 @@ var KP = globalThis.KP || (globalThis.KP = {});
         box.style.top = jp ? "157px" : "133px";
         box.style.fontSize = jp ? "45.6px" : "41px";
         box.style.lineHeight = jp ? "81px" : "77px";
+        // RU (0039): TsukiEN has zero Cyrillic glyphs, so the textbox
+        // falls back per-glyph to a system sans (Arial on Windows).
+        // RU uses the EN layout; only the font stack changes.
+        // Custom translations (0040) get the same treatment: their
+        // script is unknown, and the sans fallback covers Cyrillic.
+        box.classList.toggle("lang-ru", lang === "ru");
+        box.classList.toggle("lang-custom", lang === "custom");
       }
     }
     visualLines(html) {

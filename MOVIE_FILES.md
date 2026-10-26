@@ -3,8 +3,15 @@
 Movies are big, so they are excluded from the zip on purpose.
 Put them in `knife-port/assets/movie/` — on Windows this is normally
 a junction to `dist/assets/movie/`, so files already in `dist` need no
-copying. Only the `_en` files below are missing from `dist` and must be
-copied from the unpacked ROM (`romfs_en/movie/`) by hand.
+copying.
+
+## Status update (25.10.2026)
+
+All 30 `_en` files below are now in `dist/assets/movie/` (76 mp4
+there in total, verified by size) — a media deploy built from `dist`
+needs no extra movie copy. The list is kept so a deploy built from
+the code zip alone knows what to copy from the unpacked ROM
+(`romfs_en/movie/`).
 
 ## Gallery movies (3)
 
@@ -19,36 +26,36 @@ when it is missing, so a missing `_en` file never breaks playback —
 it just plays the Japanese version. Copy these from `romfs_en/movie/`
 to get English openings, prologue and phase titles:
 
-- `op1_arc_en.mp4` — MISSING from dist, copy it
-- `op2_ciel_en.mp4` — MISSING from dist, copy it
-- `phasetitle_01_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_02_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_03_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_04_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_05_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_05_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_06_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_06_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_07_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_07_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_08_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_08_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_09_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_09_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_10_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_10_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_10_02_en.mp4` — MISSING from dist, copy it
-- `phasetitle_11_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_11_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_12_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_12_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_13_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_13_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_14_00_en.mp4` — MISSING from dist, copy it
-- `phasetitle_14_01_en.mp4` — MISSING from dist, copy it
-- `phasetitle_15_01a_en.mp4` — MISSING from dist, copy it
-- `phasetitle_15_01b_en.mp4` — MISSING from dist, copy it
-- `prologue_en.mp4` — MISSING from dist, copy it
+- `op1_arc_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `op2_ciel_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_01_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_02_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_03_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_04_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_05_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_05_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_06_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_06_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_07_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_07_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_08_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_08_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_09_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_09_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_10_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_10_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_10_02_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_11_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_11_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_12_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_12_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_13_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_13_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_14_00_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_14_01_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_15_01a_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `phasetitle_15_01b_en.mp4` — in dist/assets/movie/ since 25.10.2026
+- `prologue_en.mp4` — in dist/assets/movie/ since 25.10.2026
 
 ## Base files the game addresses (already in dist)
 

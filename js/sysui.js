@@ -417,7 +417,55 @@ var KP = globalThis.KP || (globalThis.KP = {});
           content.appendChild(optRow("Text Display Animations", [[true, "Fade-in"], [false, "None (Display instantly)"]], cfg.textFadeIn, (v) => { cfg.textFadeIn = v; refresh(); }));
           content.appendChild(optRow("Seen Text Display Animations", [[true, "Fade-out"], [false, "None (Hide instantly)"]], cfg.textFadeOut, (v) => { cfg.textFadeOut = v; refresh(); }));
           section("Language");
-          content.appendChild(optRow("Language", [["ja", "日本語"], ["en", "English"], ["zc", "简体中文"], ["zt", "繁體中文"]], cfg.lang, (v) => { cfg.lang = v; refresh(); h.onLang(v); }));
+          const langOpts = [["ja", "日本語"], ["en", "English"], ["ru", "Русский"], ["zc", "简体中文"], ["zt", "繁體中文"]];
+          const ci0 = h.getCustomInfo ? h.getCustomInfo() : null;
+          if (ci0) langOpts.push(["custom", ci0.name.length > 28 ? ci0.name.slice(0, 27) + "…" : ci0.name]);
+          content.appendChild(optRow("Language", langOpts, cfg.lang, (v) => { cfg.lang = v; refresh(); h.onLang(v); }));
+          // Custom translation (0040): load a single-file translation
+          // ({scene: {$id: line}}, same shape as texts_ru.json) or export
+          // the selected language in that shape as an example/template.
+          {
+            const langNames = { ja: "日本語", en: "English", ru: "Русский", zc: "简体中文", zt: "繁體中文" };
+            const ci = h.getCustomInfo ? h.getCustomInfo() : null;
+            const row = el("div", "cfg-row");
+            row.appendChild(el("span", "cfg-label", "Custom Translation"));
+            const col = el("div", "cfg-opts");
+            const loadBtn = optBtn("Load file…", false, () => {
+              const inp = document.createElement("input");
+              inp.type = "file"; inp.accept = ".json,application/json";
+              inp.onchange = async () => {
+                const f = inp.files[0];
+                if (!f) return;
+                try {
+                  await h.importCustom(f);
+                  if (cfg.lang === "custom") h.onLang("custom");
+                  refresh();
+                } catch (e) { h.showDialog("Could not load custom translation: " + (e && e.message ? e.message : e)); }
+              };
+              inp.click();
+            });
+            col.appendChild(loadBtn);
+            const curLang = cfg.lang === "custom" && ci ? ci.name : (langNames[cfg.lang] || cfg.lang);
+            const expBtn = optBtn("Export " + curLang, false, async () => {
+              expBtn.textContent = "Exporting…"; expBtn.disabled = true;
+              try {
+                const r = await h.exportLang(cfg.lang);
+                h.showDialog("Exported " + r.scenes + " scenes, " + r.lines + " lines.");
+              } catch (e) { h.showDialog("Export failed: " + (e && e.message ? e.message : e)); }
+              expBtn.textContent = "Export " + curLang; expBtn.disabled = false;
+            });
+            col.appendChild(expBtn);
+            if (ci) {
+              const delBtn = optBtn("Remove", false, async () => {
+                if (!(await h.showDialog("Remove the custom translation (" + ci.name + ")?"))) return;
+                await h.removeCustom();
+                refresh();
+              });
+              col.appendChild(delBtn);
+            }
+            row.appendChild(col);
+            content.appendChild(row);
+          }
         } else if (tab === 1) {
           section("Sound Settings");
           const mute = (key) => ({ text: "Mute", on: cfg[key], onChange: (v) => { cfg[key] = v; refresh(); } });
