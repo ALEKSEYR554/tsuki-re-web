@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0041";
+  const BUILD = "knife-port-0042";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -2110,7 +2110,16 @@
     $("#btn-load").onclick = () => sysUI.openSaveLoad(false);
     $("#btn-config").onclick = () => sysUI.openConfig();
     $("#btn-gallery").onclick = () => sysUI.openGallery();
-    $("#hud-menu").onclick = () => { if (game) { playSys(3); sysUI.openMenu(); } };
+    // 0042: MENU toggles like the ✕ / right-click cancel: a second press
+    // on an open screen steps one level back (from the pause menu that
+    // closes it outright), so phones don't need the small ✕. The HUD
+    // bar sits below #stage, so MENU stays tappable while a screen is
+    // open. Mirrors the contextmenu handler above, dialog included.
+    $("#hud-menu").onclick = () => {
+      if (dialogActive) { dialogActive.cancel(); return; }
+      if (sysUI.open) { sysUI.backOneLevel(); return; }
+      if (game) { playSys(3); sysUI.openMenu(); }
+    };
     // right-click = the original's pause menu: toggle it over the frozen
     // scene (tick already halts while a system screen is open). From a
     // deeper screen it steps back to the pause menu, like the

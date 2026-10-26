@@ -74,6 +74,9 @@ html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
 #hud { display: flex; gap: 16px; width: 100%; box-sizing: border-box; padding: 8px 16px; color: #888; font-size: 14px; background: #0a0a0a; }
 .hud-spacer { flex: 1; }
 #hud-menu { background: #111; color: #ccc; border: 1px solid #666; cursor: pointer; font-size: 14px; padding: 2px 14px; }
+/* 0042: repo link beside MENU, same look; placed before MENU so MENU
+   stays at the far right edge (thumb muscle memory on phones). */
+#hud-github { background: #111; color: #ccc; border: 1px solid #666; cursor: pointer; font-size: 14px; padding: 2px 14px; text-decoration: none; }
 #hud-auto { color: #6cf; }
 /* dock station (0014): top bar, shown while the mouse is near the top of
    the stage; glassy dark bar in the spirit of the original's top menu */
