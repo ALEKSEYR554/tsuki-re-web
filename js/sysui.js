@@ -815,7 +815,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
         hit.style.cssText = `left:${nd.x}px;top:${nd.y}px;`;
         hit.title = S.sysmesText(nd.name, lang) || ("Scene " + nd.sceneId);
         hit.onmouseenter = () => setCursor(idx);
-        hit.onclick = () => { this.snd(1); this.close(); h.jumpToScene(nd.sceneId); };
+        hit.onclick = () => { this.snd(1); this.close({ noTitle: true }); h.jumpToScene(nd.sceneId); };
         content.appendChild(hit);
         hits.push(hit);
       });
@@ -990,7 +990,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
       const cur = st.cur();
       if (cur < 0) return;
       const nd = st.nodes[cur];
-      if (nd.sceneId >= 0) { this.snd(1); this.close(); this.h.jumpToScene(nd.sceneId); }
+      if (nd.sceneId >= 0) { this.snd(1); this.close({ noTitle: true }); this.h.jumpToScene(nd.sceneId); }
     }
     // ----- backlog (Log, knife ui.rs Screen::Backlog + game.rs backlog_quads) -----
     // one finished page at a time over the scene dimmed 75% black, newest
@@ -1598,7 +1598,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
           if (!(await this.h.showDialog(q))) return;
           const name = (h.idmap ? h.idmap() : {})[rec[1]];
           if (!name) return;
-          this.close();
+          this.close({ noTitle: true });
           if (h.jumpToScene) h.jumpToScene(rec[1]);
         };
         list.appendChild(d);
@@ -1609,7 +1609,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
         if (qaOk) d.onclick = async () => {
           const q = (S.sysmesText ? S.sysmesText(qa[2], lang) : "") || ("Play this episode?");
           if (!(await this.h.showDialog(q))) return;
-          this.close();
+          this.close({ noTitle: true });
           if (h.jumpToScene) h.jumpToScene(qa[1]);
         };
         list.appendChild(d);

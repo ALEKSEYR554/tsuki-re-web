@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0037";
+  const BUILD = "knife-port-0038";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -861,10 +861,18 @@
   function playTitleBgm() {
     try {
       const st = titleStage();
+      // the probe load is NOT covered by playBgm's own generation
+      // guard: if the title is left while it is in flight (flowchart
+      // jump, NEW GAME), the .then would otherwise start the title
+      // track over the new scene and loop it there. Skip the start
+      // if any stopBgm landed meanwhile, or the title is already gone.
+      const gen = audio.bgmGen;
+      const ok = () => gen === audio.bgmGen && titleEl.style.display !== "none";
       audio.load(mediaUrl("assets/bgm/72.ogg")).then((buf) => {
+        if (!ok()) return;
         const id = buf && st === 5 ? 72 : 2;
         audio.playBgm(mediaUrl("assets/bgm/" + id + ".ogg"), { volume: 1, loop: bgmLoop(id) });
-      }).catch(() => { audio.playBgm(mediaUrl("assets/bgm/2.ogg"), { volume: 1, loop: bgmLoop(2) }); });
+      }).catch(() => { if (ok()) audio.playBgm(mediaUrl("assets/bgm/2.ogg"), { volume: 1, loop: bgmLoop(2) }); });
     } catch (e) {}
   }
   // knife system sounds (SYS_SOUNDS -> BFSAR wave names): 0 cursor,
