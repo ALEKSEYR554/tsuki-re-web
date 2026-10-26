@@ -70,6 +70,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
         // Custom translations (0040) get the same treatment: their
         // script is unknown, and the sans fallback covers Cyrillic.
         box.classList.toggle("lang-ru", lang === "ru");
+        box.classList.toggle("lang-living", lang === "living");
         box.classList.toggle("lang-custom", lang === "custom");
       }
     }

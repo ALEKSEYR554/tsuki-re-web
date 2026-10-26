@@ -19,7 +19,7 @@ html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
 #textbox { position: absolute; left: 96px; right: 105px; top: 133px; height: 867px; overflow: hidden; z-index: 300; color: #fff; font-family: 'TsukiEN', Georgia, serif; font-size: 41px; line-height: 77px; text-shadow: 0 0 2px #000, 0 0 8px rgba(0,0,0,0.85), 0 0 16px rgba(0,0,0,0.5); pointer-events: none; }
 /* RU (0039): TsukiEN carries no Cyrillic glyphs; per-glyph fallback to a
    system sans keeps Latin/digits in TsukiEN and renders Cyrillic cleanly. */
-#textbox.lang-ru, #textbox.lang-custom { font-family: 'TsukiEN', Arial, Helvetica, sans-serif; }
+#textbox.lang-ru, #textbox.lang-living, #textbox.lang-custom { font-family: 'TsukiEN', Arial, Helvetica, sans-serif; }
 /* knife sub_38EC0 click icon: 39x39 frame from the DISP_PARTS strip,
    shown at ~42px (0.36 x 0.45 units per texture pixel) after the last glyph */
 .clickicon { display: inline-block; width: 42px; height: 42px; margin-left: 6px; vertical-align: middle; background-repeat: no-repeat; }

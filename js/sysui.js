@@ -417,7 +417,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
           content.appendChild(optRow("Text Display Animations", [[true, "Fade-in"], [false, "None (Display instantly)"]], cfg.textFadeIn, (v) => { cfg.textFadeIn = v; refresh(); }));
           content.appendChild(optRow("Seen Text Display Animations", [[true, "Fade-out"], [false, "None (Hide instantly)"]], cfg.textFadeOut, (v) => { cfg.textFadeOut = v; refresh(); }));
           section("Language");
-          const langOpts = [["ja", "日本語"], ["en", "English"], ["ru", "Русский"], ["zc", "简体中文"], ["zt", "繁體中文"]];
+          const langOpts = [["ja", "日本語"], ["en", "English"], ["ru", "Русский"], ["living", "Русский (Living)"], ["zc", "简体中文"], ["zt", "繁體中文"]];
           const ci0 = h.getCustomInfo ? h.getCustomInfo() : null;
           if (ci0) langOpts.push(["custom", ci0.name.length > 28 ? ci0.name.slice(0, 27) + "…" : ci0.name]);
           content.appendChild(optRow("Language", langOpts, cfg.lang, (v) => { cfg.lang = v; refresh(); h.onLang(v); }));
@@ -425,7 +425,7 @@ var KP = globalThis.KP || (globalThis.KP = {});
           // ({scene: {$id: line}}, same shape as texts_ru.json) or export
           // the selected language in that shape as an example/template.
           {
-            const langNames = { ja: "日本語", en: "English", ru: "Русский", zc: "简体中文", zt: "繁體中文" };
+            const langNames = { ja: "日本語", en: "English", ru: "Русский", living: "Русский (Living)", zc: "简体中文", zt: "繁體中文" };
             const ci = h.getCustomInfo ? h.getCustomInfo() : null;
             const row = el("div", "cfg-row");
             row.appendChild(el("span", "cfg-label", "Custom Translation"));

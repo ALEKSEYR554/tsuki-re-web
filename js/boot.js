@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0040";
+  const BUILD = "knife-port-0041";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -903,10 +903,10 @@
   }
   // language-suffixed movie file (op1_arc_en.mp4 etc.): the base name
   // is the Japanese file; ja (or an unknown language) uses the base.
-  // RU has no localized movies: it falls back to the EN ones (0039).
+  // RU and Living have no localized movies: they fall back to EN (0039).
   function movieUrlForLang(url) {
     const lang = (config && config.lang) || "en";
-    const suf = lang === "en" || lang === "ru" || lang === "custom" ? "_en" : lang === "zc" ? "_zc" : lang === "zt" ? "_zt" : "";
+    const suf = lang === "en" || lang === "ru" || lang === "living" || lang === "custom" ? "_en" : lang === "zc" ? "_zc" : lang === "zt" ? "_zt" : "";
     if (!suf || !url.endsWith(".mp4")) return mediaUrl(url);
     return mediaUrl(url.slice(0, -4) + suf + ".mp4");
   }
@@ -1226,13 +1226,15 @@
     }
     return false;
   }
-  // RU script (0039): a code-side file, not part of scene packs, so
-  // scenes/media never need re-uploading. Loaded lazily on first use.
-  let ruTexts = null, ruTextsPromise = null;
-  async function ensureRuTexts() {
-    if (ruTexts) return ruTexts;
-    if (!ruTextsPromise) ruTextsPromise = fetchJSON("data/texts_ru.json").then((d) => { ruTexts = d; return d; }).catch(() => { ruTextsPromise = null; return null; });
-    return ruTextsPromise;
+  // Built-in single-file translations (0039 ru, 0041 living): code-side
+  // files, not part of scene packs, so scenes/media never need
+  // re-uploading. Loaded lazily on first use.
+  const LANG_FILES = { ru: "data/texts_ru.json", living: "data/texts_living.json" };
+  let langFileCache = {}, langFilePromises = {};
+  async function ensureLangFile(lang) {
+    if (langFileCache[lang]) return langFileCache[lang];
+    if (!langFilePromises[lang]) langFilePromises[lang] = fetchJSON(LANG_FILES[lang]).then((d) => { langFileCache[lang] = d; return d; }).catch(() => { langFilePromises[lang] = null; return null; });
+    return langFilePromises[lang];
   }
   // Custom translations (0040): the same single-file shape as
   // texts_ru.json ({scene: {$id: line}}), loaded by the user from Config
@@ -1298,11 +1300,13 @@
     await i18nRun("readwrite", "custom", undefined);
     customTexts = null; customName = null;
   }
-  // ru/custom injection shared by startScene and applyLanguage: the
-  // built-in packs carry only en/zc/zt, so ru/custom plug in here.
+  // ru/living/custom injection shared by startScene and applyLanguage:
+  // the built-in packs carry only en/zc/zt, so ru/living/custom plug in
+  // here (living falls back to Japanese for its untranslated lines,
+  // exactly like the Switch mod it came from).
   async function injectLangTexts(pack, name) {
-    if (LANG !== "ru" && LANG !== "custom") return;
-    const rt = LANG === "ru" ? await ensureRuTexts() : customTexts;
+    if (LANG !== "ru" && LANG !== "living" && LANG !== "custom") return;
+    const rt = LANG === "custom" ? customTexts : await ensureLangFile(LANG);
     if (rt && rt[name]) { pack.texts_i18n = pack.texts_i18n || {}; pack.texts_i18n[LANG] = rt[name]; }
   }
   function downloadJSON(filename, obj) {
@@ -1314,11 +1318,11 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   }
   // Export the selected language as one file in the texts_ru.json shape:
-  // ru/custom come from their single file / memory, ja/en/zc/zt are
-  // assembled from the scene packs (8 concurrent fetches).
+  // ru/living come from their single file, custom from memory, ja/en/zc/zt
+  // are assembled from the scene packs (8 concurrent fetches).
   async function exportLangTexts(lang) {
     let data;
-    if (lang === "ru") data = await fetchJSON("data/texts_ru.json");
+    if (LANG_FILES[lang]) data = await fetchJSON(LANG_FILES[lang]);
     else if (lang === "custom") {
       if (!customTexts) throw new Error("No custom translation loaded.");
       data = customTexts;
