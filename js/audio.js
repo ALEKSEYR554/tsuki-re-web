@@ -188,7 +188,22 @@ var KP = globalThis.KP || (globalThis.KP = {});
       this.seTok.set(channel, my);
       const old = this.se.get(channel);
       if (old) old.stop(0);
-      const buf = await this.load(url);
+      // SE buffer cache (0037): the same SE used to fetch + decode on
+      // EVERY play — a menu cursor move re-downloaded its 5 kB click
+      // each time instead of reusing the decoded buffer. playBuffer
+      // makes a fresh source per play, so sharing the buffer is safe.
+      // FIFO cap bounds memory; failures are never cached, so a file
+      // that appears later still loads. BGM/voice stay uncached here:
+      // their decoded buffers are megabytes each.
+      if (!this.seBufs) this.seBufs = new Map();
+      let buf = this.seBufs.get(url);
+      if (!buf) {
+        buf = await this.load(url);
+        if (buf) {
+          this.seBufs.set(url, buf);
+          if (this.seBufs.size > 256) this.seBufs.delete(this.seBufs.keys().next().value);
+        }
+      }
       if (!buf || my !== this.seTok.get(channel)) return;
       let gain, curve;
       if (speakerRow !== null && speakerRow >= 0 && speakerRow < 19) {

@@ -4,6 +4,11 @@ html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
 #app { display: flex; flex-direction: column; align-items: center; }
 #stage { position: relative; width: 1920px; height: 1080px; transform-origin: top left; overflow: hidden; background: #000; }
 #canvas { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+#loader { position: fixed; inset: 0; z-index: 900; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; transition: opacity .3s; }
+#loader.hide { opacity: 0; pointer-events: none; }
+.loader-spin { width: 64px; height: 64px; border: 4px solid #222; border-top-color: #fff; border-radius: 50%; animation: loader-spin 1s linear infinite; }
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+.loader-text { color: #888; font-family: Georgia, serif; font-size: 20px; letter-spacing: 3px; }
 #movie { position: absolute; inset: 0; width: 1920px; height: 1080px; display: none; z-index: 500; }
 #veil { position: absolute; inset: 0; background: #000; opacity: 0; z-index: 400; pointer-events: none; transition: opacity 200ms; }
 #winpanel { position: absolute; inset: 0; z-index: 250; pointer-events: none; opacity: 0;

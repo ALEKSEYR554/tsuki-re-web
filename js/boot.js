@@ -14,7 +14,7 @@
         titleBgFallbackEl = $("#title-bg-fallback"),
         bootVideoWrapEl = $("#boot-video-wrap"), bootVideoEl = $("#boot-video"), bootVideoHintEl = $("#boot-video-hint"),
         introEl = $("#intro"), introBgEl = $("#intro-bg"), introImgEl = $("#intro-img"), introWhiteEl = $("#intro-white");
-  const BUILD = "knife-port-0035";
+  const BUILD = "knife-port-0037";
   // split deployment (nginx): the player code lives on one domain and
   // the unpacked media (assets/, scenes/) on another. media-base.json
   // at the code root (deploy/ template, server-only) names the media
@@ -206,7 +206,7 @@
   // the background, 6 at a time, and draw()'s textureless-quad filter
   // keeps them invisible until they land. A newer warm or an unload
   // bumps warmGen and stops the stale background job.
-  async function warmTextures(pack, motionsData) {
+  async function warmTextures(pack, motionsData, full) {
     const gen = ++warmGen;
     // renderer-swap re-warm passes no data: reuse the current scene's
     // motions (loadMotions always runs for the scene being shown).
@@ -240,7 +240,7 @@
       if (img) textures[name.toLowerCase()] = img;
     };
     await Promise.all(tier0.map(loadOne));
-    (async () => {
+    const warmRest = async () => {
       for (let i = 0; i < rest.length; i += 6) {
         if (gen !== warmGen) return;
         await Promise.all(rest.slice(i, i + 6).map(async (name) => {
@@ -252,7 +252,11 @@
           if (img) { textures[name.toLowerCase()] = img; texDirty = true; }
         }));
       }
-    })();
+    };
+    // Full gate (0036): a gated scene waits for ALL of its images, not
+    // just the first frame — the rest used to trickle in mid-scene.
+    if (full) await warmRest();
+    else warmRest();
   }
   function lookupPackMap(pack, mapName, key) {
     const m = pack ? pack[mapName] : null;
@@ -696,10 +700,56 @@
     await startScene(rec.scene, null, rec.pc || 0, false);
     return "loaded";
   }
-  function showTitle(opts) {
+  // Loading gate (0036): the loader is visible in static HTML from the
+  // first paint, so a slow media host never shows a bare black page.
+  // Gates reveal it only if the wait lasts >150 ms (cached assets never
+  // flash it) and always hide it, even on failure.
+  function hideLoader() { const el = document.getElementById("loader"); if (el) el.classList.add("hide"); }
+  function loaderGate() {
+    const el = document.getElementById("loader");
+    let t = null;
+    if (el && el.classList.contains("hide")) t = setTimeout(() => el.classList.remove("hide"), 150);
+    return () => { if (t) clearTimeout(t); hideLoader(); };
+  }
+  function preloadImage(src) {
+    return new Promise((res) => {
+      const im = new Image();
+      im.onload = im.onerror = () => res();
+      im.src = mediaUrl(src);
+    });
+  }
+  // Title art gate: logo, menu atlas, lumi, note, particles and the
+  // titlebg movie (canplay, not full download). Any failure counts as
+  // done, and a 30 s cap guarantees the menu never hangs on a dead host.
+  async function preloadTitle() {
+    const n = titleBgStage();
+    const videoReady = new Promise((res) => {
+      if (!titleVideoEl) return res();
+      if (titleVideoEl.dataset.n !== String(n)) {
+        titleVideoEl.dataset.n = String(n);
+        titleVideoEl.src = mediaUrl("assets/movie/titlebg" + n + ".mp4");
+        titleVideoEl.load();
+      }
+      if (titleVideoEl.readyState >= 3) return res();
+      const done = () => {
+        titleVideoEl.removeEventListener("canplay", done);
+        titleVideoEl.removeEventListener("error", done);
+        res();
+      };
+      titleVideoEl.addEventListener("canplay", done);
+      titleVideoEl.addEventListener("error", done);
+    });
+    const imgs = ["data/title/bg1.webp", "data/title/lumi.webp", "data/title/copy.webp", "data/title/logo.webp", "data/title/menu.webp", "data/title/particles.webp"];
+    const cap = new Promise((res) => setTimeout(res, 30000));
+    await Promise.race([Promise.all([...imgs.map(preloadImage), videoReady]), cap]);
+  }
+  async function showTitle(opts) {
     const press = !!(opts && opts.press);
     disarmPress();
     titleEl.classList.toggle("press", press);
+    // Title gate (0036): the menu appears only once its art is in.
+    const doneGate = loaderGate();
+    try { await preloadTitle(); } finally { doneGate(); }
     titleEl.style.display = "flex";
     hudScene.textContent = "";
     refreshContinue();
@@ -989,6 +1039,7 @@
       const onClick = () => gesture();
       const finish = () => {
         if (done) return; done = true;
+        hideLoader();
         bootVideoEl.removeEventListener("click", onClick);
         removeEventListener("keydown", onKey);
         bootVideoWrapEl.style.display = "none";
@@ -1000,6 +1051,7 @@
       bootVideoWrapEl.style.display = "block";
       startedAt = performance.now();
       bootVideoEl.src = mediaUrl("assets/movie/TM_CI.mp4");
+      bootVideoEl.addEventListener("playing", hideLoader, { once: true });
       bootVideoEl.onended = finish;
       bootVideoEl.onerror = finish;
       bootVideoEl.addEventListener("click", onClick);
@@ -1159,9 +1211,17 @@
     // RDAS never fires during a flowchart replay (knife !flow_replay):
     // only a flowchart jump arms it, JUMPs inside the chain keep it
     flowReplay = !!(opts && opts.flowReplay);
-    const pack = await fetchJSON(mediaUrl(meta.file));
-    const motionsData = await loadMotions(name);
-    await warmTextures(pack, motionsData);
+    // Hard load gate (0036): nothing plays until the scene pack, its
+    // motions and ALL of its images are in. The loader shows only if
+    // the wait lasts (cached scenes never flash it); finally hides it
+    // even when the pack fails to load.
+    const doneGate = loaderGate();
+    let pack, motionsData;
+    try {
+      pack = await fetchJSON(mediaUrl(meta.file));
+      motionsData = await loadMotions(name);
+      await warmTextures(pack, motionsData, true);
+    } finally { doneGate(); }
     // knife keeps ONE Game across scenes: vars (F822 page mode included),
     // nodes and the stage survive a JUMP. Only NEW GAME resets them.
     if (fresh || !game) game = makeGame(pack);
