@@ -11,7 +11,7 @@
 <div id="app">
   <div id="stage">
     <canvas id="canvas" width="1920" height="1080"></canvas>
-    <video id="movie" playsinline></video>
+    <video id="movie" playsinline preload="metadata"></video>
     <div id="veil"></div>
     <div id="winpanel"><img id="winpanel-img" src="data/disp_txtwindow01_en.webp" alt=""></div>
     <div id="textbox"><div id="text"></div></div>
@@ -30,7 +30,7 @@
     </div>
     <div id="dock-hint">Hold to fast-forward. Let go to stop.</div>
     <div id="title">
-      <video id="title-video" muted playsinline></video>
+      <video id="title-video" muted playsinline preload="metadata"></video>
       <img id="title-bg-fallback" src="data/title/bg1.webp" alt="">
       <img id="title-lumi" src="data/title/lumi.webp" alt="">
       <canvas id="title-fx" width="1920" height="1080"></canvas>
@@ -52,7 +52,7 @@
       <div id="intro-white"></div>
     </div>
     <div id="boot-video-wrap" style="display:none">
-      <video id="boot-video" playsinline></video>
+      <video id="boot-video" playsinline preload="metadata"></video>
       <div id="boot-video-hint" style="display:none">Click for sound</div>
     </div>
     <div id="system" style="display:none">
